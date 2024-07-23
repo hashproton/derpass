@@ -1,27 +1,33 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Api.Configuration.Options;
+using Api.Entities;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Utils;
 
 internal static class JwtBearerToken
 {
-    public static async Task<TokenResponses> GenerateToken(ClaimsPrincipal user, IServiceProvider sp)
+    public static async Task<TokenResponses> GenerateToken(string userId, IServiceProvider sp)
     {
+        var options = sp.GetRequiredService<IOptions<JwtOptions>>().Value;
+
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(DerpassIdentity.JwtKey));
         var jti = Guid.NewGuid();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
+            Issuer = options.Issuer,
+            Audience = options.Audience,
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value),
+                new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Jti, jti.ToString()),
             }),
-            Expires = DateTime.UtcNow.AddMinutes(15),
-            SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature)
+            Expires = DateTime.UtcNow.AddHours(12),
+            SigningCredentials = new SigningCredentials(options.SymmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -30,7 +36,8 @@ internal static class JwtBearerToken
         var refreshToken = new RefreshToken
         {
             Jti = jti,
-            UserId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value
+            UserId = userId,
+            Expires = DateTime.UtcNow.AddDays(options.RefreshToken.ExpiryInDays)
         };
         
         sp.GetRequiredService<ApplicationDbContext>().RefreshTokens.Add(refreshToken);

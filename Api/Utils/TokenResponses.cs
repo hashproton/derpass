@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Api;
+namespace Api.Utils;
 
 [JsonSerializable(typeof(TokenResponses))]
 internal class TokenResponses

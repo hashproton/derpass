@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api;
+namespace Api.Endpoints;
 
 public static class RolesEndpointsExtension
 {

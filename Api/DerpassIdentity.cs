@@ -24,7 +24,8 @@ public static class DerpassIdentity
         services.AddJwtOptions();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme);
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme)
+            .AddIdentityCookies();
         
         return services.AddIdentityCore<User>(configure)
             .AddApiEndpoints();

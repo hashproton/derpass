@@ -12,6 +12,8 @@ internal static class JwtBearerToken
 {
     public static async Task<TokenResponses> GenerateToken(string userId, IServiceProvider sp)
     {
+        var timeProvider = sp.GetRequiredService<TimeProvider>();
+
         var options = sp.GetRequiredService<IOptions<JwtOptions>>().Value;
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -26,7 +28,7 @@ internal static class JwtBearerToken
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Jti, jti.ToString()),
             }),
-            Expires = DateTime.UtcNow.AddHours(12),
+            Expires = timeProvider.GetUtcNow().DateTime.AddHours(12),
             SigningCredentials = new SigningCredentials(options.SymmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
         };
 
@@ -37,7 +39,7 @@ internal static class JwtBearerToken
         {
             Jti = jti,
             UserId = userId,
-            Expires = DateTime.UtcNow.AddDays(options.RefreshToken.ExpiryInDays)
+            Expires = timeProvider.GetUtcNow().DateTime.AddDays(options.RefreshToken.ExpiryInDays)
         };
         
         sp.GetRequiredService<ApplicationDbContext>().RefreshTokens.Add(refreshToken);
